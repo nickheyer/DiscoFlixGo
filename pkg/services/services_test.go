@@ -12,9 +12,10 @@ import (
 )
 
 var (
-	c   *Container
-	ctx echo.Context
-	usr *ent.User
+	c     *Container
+	ctx   echo.Context
+	usr   *ent.User
+	admin *ent.User
 )
 
 func TestMain(m *testing.M) {
@@ -31,6 +32,11 @@ func TestMain(m *testing.M) {
 	// Create a test user
 	var err error
 	if usr, err = tests.CreateUser(c.ORM); err != nil {
+		panic(err)
+	}
+
+	// Create a test admin
+	if admin, err = tests.CreateAdmin(c.ORM); err != nil {
 		panic(err)
 	}
 

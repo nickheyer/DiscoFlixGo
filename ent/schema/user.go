@@ -34,6 +34,10 @@ func (User) Fields() []ent.Field {
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
+		field.Bool("is_admin").
+			Default(false),
+		field.Strings("roles").
+			Optional(),
 	}
 }
 
@@ -49,6 +53,7 @@ func (User) Edges() []ent.Edge {
 func (User) Hooks() []ent.Hook {
 	return []ent.Hook{
 		hook.On(
+			// Mutate incoming email addresses to be lowercase.
 			func(next ent.Mutator) ent.Mutator {
 				return hook.UserFunc(func(ctx context.Context, m *ge.UserMutation) (ent.Value, error) {
 					if v, exists := m.Email(); exists {
@@ -57,8 +62,10 @@ func (User) Hooks() []ent.Hook {
 					return next.Mutate(ctx, m)
 				})
 			},
-			// Limit the hook only for these operations.
-			ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne,
+			// Hook on User Create or Update.
+			ent.OpCreate|
+				ent.OpUpdate|
+				ent.OpUpdateOne,
 		),
 	}
 }

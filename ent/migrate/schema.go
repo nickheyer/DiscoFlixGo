@@ -37,6 +37,8 @@ var (
 		{Name: "password", Type: field.TypeString},
 		{Name: "verified", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
+		{Name: "is_admin", Type: field.TypeBool, Default: false},
+		{Name: "roles", Type: field.TypeJSON, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{

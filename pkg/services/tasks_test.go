@@ -3,10 +3,11 @@ package services
 import (
 	"context"
 	"database/sql"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type testTask struct {
@@ -17,7 +18,7 @@ func (t testTask) Name() string {
 	return "test_task"
 }
 
-func TestTaskClient_New(t *testing.T) {
+func TestNewTaskClient(t *testing.T) {
 	var subCalled bool
 
 	queue := NewQueue[testTask](func(ctx context.Context, task testTask) error {

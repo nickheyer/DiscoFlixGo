@@ -72,3 +72,16 @@ func CreateUser(orm *ent.Client) (*ent.User, error) {
 		SetName(fmt.Sprintf("Test User %s", seed)).
 		Save(context.Background())
 }
+
+// CreateAdmin creates a random admin entity w/ permissions
+func CreateAdmin(orm *ent.Client) (*ent.User, error) {
+	seed := fmt.Sprintf("%d-%d", time.Now().UnixMilli(), rand.Intn(1000000))
+	return orm.User.
+		Create().
+		SetEmail(fmt.Sprintf("testadmin-%s@localhost.localhost", seed)).
+		SetPassword("password").
+		SetIsAdmin(true).
+		SetRoles([]string{"manage_users", "view_reports"}).
+		SetName(fmt.Sprintf("Test Admin %s", seed)).
+		Save(context.Background())
+}

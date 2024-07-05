@@ -34,6 +34,36 @@ func TestAuthClient_Auth(t *testing.T) {
 	u, err := c.Auth.GetAuthenticatedUser(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, u.ID, usr.ID)
+	assert.False(t, u.IsAdmin)
+
+	err = c.Auth.Logout(ctx)
+	require.NoError(t, err)
+
+	assertNoAuth()
+}
+
+func TestAuthClient_Auth_Admin(t *testing.T) {
+	assertNoAuth := func() {
+		_, err := c.Auth.GetAuthenticatedUserID(ctx)
+		assert.True(t, errors.Is(err, NotAuthenticatedError{}))
+		_, err = c.Auth.GetAuthenticatedUser(ctx)
+		assert.True(t, errors.Is(err, NotAuthenticatedError{}))
+	}
+
+	assertNoAuth()
+
+	err := c.Auth.Login(ctx, admin.ID)
+	require.NoError(t, err)
+
+	uid, err := c.Auth.GetAuthenticatedUserID(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, admin.ID, uid)
+
+	u, err := c.Auth.GetAuthenticatedUser(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, admin.ID, u.ID)
+	assert.True(t, u.IsAdmin)
+	assert.ElementsMatch(t, []string{"manage_users", "view_reports"}, u.Roles)
 
 	err = c.Auth.Logout(ctx)
 	require.NoError(t, err)
