@@ -81,6 +81,7 @@ type (
 		Environment   environment
 		EncryptionKey string
 		Timeout       time.Duration
+		WsTimeout     time.Duration
 		PasswordToken struct {
 			Expiration time.Duration
 			Length     int

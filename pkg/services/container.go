@@ -30,7 +30,7 @@ type Container struct {
 	Web *echo.Echo
 
 	// Websocket stores the websocket client
-	Websocket *WsClient
+	Ws *WsClient
 
 	// Config stores the application configuration
 	Config *config.Config
@@ -63,6 +63,7 @@ func NewContainer() *Container {
 	c.initConfig()
 	c.initValidator()
 	c.initWeb()
+	c.initWebsocket()
 	c.initCache()
 	c.initDatabase()
 	c.initORM()
@@ -70,7 +71,7 @@ func NewContainer() *Container {
 	c.initTemplateRenderer()
 	c.initMail()
 	c.initTasks()
-	c.initWebsocket()
+
 	return c
 }
 
@@ -119,7 +120,7 @@ func (c *Container) initWeb() {
 
 // initWebsocket initializes a websocket connection
 func (c *Container) initWebsocket() {
-	c.Websocket = NewWsClient(c.Web)
+	c.Ws = NewWsClient(c.Web)
 }
 
 // initCache initializes the cache

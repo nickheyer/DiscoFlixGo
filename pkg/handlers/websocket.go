@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"fmt"
-
 	"github.com/labstack/echo/v4"
 	"github.com/nickheyer/DiscoFlixGo/pkg/services"
 )
@@ -13,7 +11,7 @@ const (
 
 type (
 	WsConn struct {
-		websocket *services.WsClient
+		ws *services.WsClient
 	}
 )
 
@@ -22,7 +20,7 @@ func init() {
 }
 
 func (h *WsConn) Init(c *services.Container) error {
-	h.websocket = c.Websocket
+	h.ws = c.Ws
 	return nil
 }
 
@@ -31,7 +29,6 @@ func (h *WsConn) Routes(g *echo.Group) {
 }
 
 func (h *WsConn) connect(ctx echo.Context) error {
-	fmt.Printf("%+v\n", h.websocket)
-	h.websocket.addConnectionToPool(ctx)
+	h.ws.AddConnectionToPool(ctx)
 	return nil
 }

@@ -16,7 +16,6 @@ ent-new:
 # Run the application
 .PHONY: run
 run:
-	clear
 	go run cmd/web/main.go
 
 # Run all tests
