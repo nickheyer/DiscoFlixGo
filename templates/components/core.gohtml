@@ -18,6 +18,7 @@
 
 {{define "js"}}
     <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script>
+    <script src="https://unpkg.com/htmx-ext-ws@2.0.0/ws.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 {{end}}
 
@@ -37,6 +38,12 @@
                 evt.detail.shouldSwap = true;
                 evt.detail.target = htmx.find("body");
             }
+        });
+        document.body.addEventListener('htmx:wsConnecting', function(evt) {
+            console.log('Connecting to server via ws: ', JSON.stringify(evt.detail, 4, 2));
+        });
+        document.body.addEventListener('htmx:wsOpen', function(evt) {
+            console.log('Client is connected to server via ws: ', JSON.stringify(evt.detail, 4, 2));
         });
     </script>
 {{end}}

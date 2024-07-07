@@ -28,3 +28,28 @@ test:
 .PHONY: check-updates
 check-updates:
 	go list -u -m -f '{{if not .Indirect}}{{.}}{{end}}' all | grep "\["
+
+# Clean the build cache and module cache
+.PHONY: clean
+clean:
+	go clean -cache -modcache -i -r
+
+# Clean and rebuild the project
+.PHONY: rebuild
+rebuild: clean
+	go build cmd/web/main.go
+
+# Tidy go.mod by removing unused dependencies
+.PHONY: tidy
+tidy:
+	go mod tidy
+
+# Install all dependencies
+.PHONY: install-deps
+install-deps:
+	go mod download
+
+# Generate all necessary code and build the project
+.PHONY: all
+all: ent-gen tidy install-deps rebuild
+

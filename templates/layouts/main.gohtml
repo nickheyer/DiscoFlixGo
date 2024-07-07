@@ -5,7 +5,7 @@
         {{template "css" .}}
         {{template "js" .}}
     </head>
-    <body class="has-background-light" style="min-height:100%;">
+    <body class="has-background-light" style="min-height:100%;" hx-ext="ws" ws-connect="/ws">
         <nav class="navbar is-dark">
             <div class="container">
                 <div class="navbar-brand" hx-boost="true">
