@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/labstack/echo/v4"
@@ -48,24 +49,37 @@ func (client *WsClient) AddConnectionToPool(ctx echo.Context) error {
 		}(ws)
 
 		client.pool.Unlock()
-		msg := ""
-		for {
-			if err := websocket.Message.Receive(ws, &msg); err != nil {
-				return
-			}
-			client.sendMessageToAllPool(msg)
-		}
+		client.Broadcast("client joined")
+		client.listen(ws)
 	}).ServeHTTP(ctx.Response(), ctx.Request())
 	return nil
 }
 
 // listen monitors and relays ws messages from a connection.
-func (client *WsClient) sendMessageToAllPool(message string) {
-	client.pool.RLock()
-	defer client.pool.RUnlock()
-	for connection := range client.pool.connections {
-		if err := websocket.Message.Send(connection, message); err != nil {
-			// Handle error appropriately (e.g., log it)
+func (client *WsClient) listen(wsConn *websocket.Conn) error {
+	msg := ""
+	for {
+		if err := websocket.Message.Receive(wsConn, &msg); err != nil {
+			return errors.New("error while receiving WebSocket msg")
+		}
+		if err := client.Broadcast(msg); err != nil {
+			return errors.New("error while sending WebSocket msg")
 		}
 	}
+}
+
+func (client *WsClient) Broadcast(msg string) error {
+	client.pool.RLock()
+	defer client.pool.RUnlock()
+	log.Default().Info("Broadcasting message to all clients: ", msg, "...")
+	for connection := range client.pool.connections {
+		if err := websocket.Message.Send(connection, msg); err != nil {
+			return errors.New("unable to send message via websocket")
+		}
+	}
+	return nil
+}
+
+func (client *WsClient) GetEchoInstance() *echo.Echo {
+	return client.echo
 }

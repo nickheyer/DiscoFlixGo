@@ -23,6 +23,7 @@ const (
 type (
 	Task struct {
 		tasks *services.TaskClient
+		ws    *services.WsClient
 		*services.TemplateRenderer
 	}
 
@@ -40,6 +41,7 @@ func init() {
 func (h *Task) Init(c *services.Container) error {
 	h.TemplateRenderer = c.TemplateRenderer
 	h.tasks = c.Tasks
+	h.ws = c.Ws
 	return nil
 }
 
@@ -82,7 +84,9 @@ func (h *Task) Submit(ctx echo.Context) error {
 		return fail(err, "unable to create a task")
 	}
 
-	msg.Success(ctx, fmt.Sprintf("The task has been created. Check the logs in %d seconds.", input.Delay))
+	msgText := fmt.Sprintf("The task has been created. Check the logs in %d seconds.", input.Delay)
+	msg.Success(ctx, msgText)
+	h.ws.Broadcast(msgText)
 	form.Clear(ctx)
 
 	return h.Page(ctx)

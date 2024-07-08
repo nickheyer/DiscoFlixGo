@@ -36,7 +36,6 @@ func BuildRouter(c *services.Container) error {
 		middleware.SetLogger(),
 		middleware.LogRequest(),
 		echomw.Gzip(),
-		middleware.TimeoutMiddleware(c.Config.App.Timeout, c.Config.App.WsTimeout),
 		middleware.Session(sessions.NewCookieStore([]byte(c.Config.App.EncryptionKey))),
 		middleware.LoadAuthenticatedUser(c.Auth),
 		middleware.ServeCachedPage(c.TemplateRenderer),

@@ -12,7 +12,7 @@
 {{end}}
 
 {{define "form"}}
-    <form id="task" method="post" hx-post="{{url "task.submit"}}">
+    <form id="task" method="post" hx-post="{{url "task.submit"}}" hx-ws="send:submit" ws-send>
         {{template "messages" .}}
         <div class="field">
             <label for="delay" class="label">Delay (in seconds)</label>

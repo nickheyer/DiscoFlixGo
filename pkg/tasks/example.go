@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/nickheyer/DiscoFlixGo/pkg/log"
 	"github.com/nickheyer/DiscoFlixGo/pkg/services"
@@ -31,6 +32,7 @@ func NewExampleTaskQueue(c *services.Container) services.Queue {
 		log.Default().Info("This can access the container for dependencies",
 			"echo", c.Web.Reverse("home"),
 		)
+		c.Ws.Broadcast(fmt.Sprintf("Example task completed: %s", task.Message))
 		return nil
 	})
 }

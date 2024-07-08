@@ -15,7 +15,6 @@ app:
   # Change this on any live environments
   encryptionKey: "?E(G+KbPeShVmYq3t6w9z$C&F)J@McQf"
   timeout: "20s"
-  wsTimeout: "120s"
   passwordToken:
       expiration: "60m"
       length: 64
