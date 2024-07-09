@@ -2,7 +2,6 @@ package services
 
 import (
 	"errors"
-	"sync"
 
 	"github.com/labstack/echo/v4"
 	"github.com/nickheyer/DiscoFlixGo/pkg/log"
@@ -11,13 +10,15 @@ import (
 
 // WsClient manages WebSocket connections and broadcasts messages to all connections.
 type WsClient struct {
-	pool *ConnectionPool
-	echo *echo.Echo
+	pool        *ConnectionPool
+	echo        *echo.Echo
+	addCh       chan *websocket.Conn
+	removeCh    chan *websocket.Conn
+	broadcastCh chan string
 }
 
 // ConnectionPool manages WebSocket connections.
 type ConnectionPool struct {
-	sync.RWMutex
 	connections map[*websocket.Conn]struct{}
 }
 
@@ -27,59 +28,77 @@ func NewWsClient(e *echo.Echo) *WsClient {
 		pool: &ConnectionPool{
 			connections: make(map[*websocket.Conn]struct{}),
 		},
-		echo: e,
+		echo:        e,
+		addCh:       make(chan *websocket.Conn),
+		removeCh:    make(chan *websocket.Conn),
+		broadcastCh: make(chan string),
 	}
+	go client.manageConnections()
 	return client
 }
 
-// addConnectionToPool adds a WebSocket connection to the pool and listens for messages.
+// manageConnections handles connection management and broadcasting messages.
+func (client *WsClient) manageConnections() {
+	for {
+		select {
+		case conn := <-client.addCh:
+			client.pool.connections[conn] = struct{}{}
+			log.Default().Info("WebSocket connection established.")
+		case conn := <-client.removeCh:
+			delete(client.pool.connections, conn)
+			log.Default().Info("WebSocket connection removed.")
+		case msg := <-client.broadcastCh:
+			for conn := range client.pool.connections {
+				go func(c *websocket.Conn) {
+					if err := websocket.Message.Send(c, msg); err != nil {
+						log.Default().Error("Unable to send message via WebSocket: ", "error", err)
+					}
+				}(conn)
+			}
+		}
+	}
+}
+
+// AddConnectionToPool adds a WebSocket connection to the pool and listens for messages.
 func (client *WsClient) AddConnectionToPool(ctx echo.Context) error {
 	websocket.Handler(func(ws *websocket.Conn) {
-		// Add connection to pool.
-		client.pool.Lock()
-		client.pool.connections[ws] = struct{}{}
-		log.Ctx(ctx).Info("Websocket connection established with session.")
-
-		// Defer removal until client disconnects
-		defer func(connection *websocket.Conn) {
-			client.pool.Lock()
-			delete(client.pool.connections, connection)
-			log.Ctx(ctx).Info("Removing Websocket connection from connection pool.")
-			client.pool.Unlock()
-		}(ws)
-
-		client.pool.Unlock()
-		client.Broadcast("client joined")
+		client.addCh <- ws
+		defer func() { client.removeCh <- ws }()
+		client.broadcastCh <- "client joined"
 		client.listen(ws)
 	}).ServeHTTP(ctx.Response(), ctx.Request())
 	return nil
 }
 
-// listen monitors and relays ws messages from a connection.
+// listen monitors and relays WebSocket messages from a connection.
 func (client *WsClient) listen(wsConn *websocket.Conn) error {
 	msg := ""
 	for {
 		if err := websocket.Message.Receive(wsConn, &msg); err != nil {
-			return errors.New("error while receiving WebSocket msg")
+			return errors.New("error while receiving WebSocket message")
 		}
-		if err := client.Broadcast(msg); err != nil {
-			return errors.New("error while sending WebSocket msg")
-		}
+		client.broadcastCh <- msg
 	}
 }
 
-func (client *WsClient) Broadcast(msg string) error {
-	client.pool.RLock()
-	defer client.pool.RUnlock()
-	log.Default().Info("Broadcasting message to all clients: ", msg, "...")
-	for connection := range client.pool.connections {
-		if err := websocket.Message.Send(connection, msg); err != nil {
-			return errors.New("unable to send message via websocket")
-		}
-	}
-	return nil
+// Broadcast sends a message to all connected client
+func (client *WsClient) Broadcast(msg string) {
+	client.broadcastCh <- msg
 }
 
+func (client *WsClient) Remove(ws *websocket.Conn) {
+	client.removeCh <- ws
+}
+
+// GetEchoInstance returns the Echo instance associated with the WsClient.
 func (client *WsClient) GetEchoInstance() *echo.Echo {
 	return client.echo
+}
+
+func (client *WsClient) GetConnections() map[*websocket.Conn]struct{} {
+	return client.Pool().connections
+}
+
+func (client *WsClient) Pool() *ConnectionPool {
+	return client.pool
 }
